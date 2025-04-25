@@ -6,6 +6,8 @@ yarn-debug.log
 package-lock.json
 yarn.lock
 
+conditions.txt
+
 # Build output
 out
 dist
