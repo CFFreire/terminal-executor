@@ -1,0 +1,15 @@
+### I
+curl --location 'http://localhost:3000/api/documents/sign' \
+--form 'file=@"/Users/carlosfreire/Downloads/prueba.pdf"' \
+--form 'certificates=@"/Users/carlosfreire/Documents/Firma/EO.pfx"' \
+--form 'certificates=@"/Users/carlosfreire/Documents/Firma/PF.pfx"' \
+--form 'signers="[{\"password\":\"XXXX\",\"page\":2,\"offsetX\":260,\"offsetY\":595,\"reason\":\"\",\"location\":\"\"},{\"password\":\"XXX\",\"page\":2,\"offsetX\":440,\"offsetY\":595,\"reason\":\"\",\"location\":\"\"}]"' \
+--output '/Users/carlosfreire/Downloads/file-signed.pdf'
+
+
+### Nuevo
+curl --location 'http://localhost:3000/api/documents/sign' \
+
+### Nuevo
+curl --location 'http://localhost:3000/api/documents/sign' \
+
