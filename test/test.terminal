@@ -1,5 +1,8 @@
-### I
-curl --location 'http://localhost:3000/api/documents/sign' \
+### $VARIABLES
+URL_BASE=http://localhost:3000
+
+### Informacion
+curl --location '${URL_BASE}/api/documents/sign' \
 --form 'file=@"/Users/carlosfreire/Downloads/prueba.pdf"' \
 --form 'certificates=@"/Users/carlosfreire/Documents/Firma/EO.pfx"' \
 --form 'certificates=@"/Users/carlosfreire/Documents/Firma/PF.pfx"' \
@@ -8,8 +11,8 @@ curl --location 'http://localhost:3000/api/documents/sign' \
 
 
 ### Nuevo
-curl --location 'http://localhost:3000/api/documents/sign' \
+curl --location '$URL_BASE/api/documents/sign'
 
 ### Nuevo
-curl --location 'http://localhost:3000/api/documents/sign' \
+curl --location '${URL_BASE}/api/documents/sign'
 
