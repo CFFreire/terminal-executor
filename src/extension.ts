@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as os from 'os';
 
 // Store command execution status
 interface CommandStatus {
@@ -81,7 +80,9 @@ export function activate(ctx: vscode.ExtensionContext) {
           placeHolder: 'e.g. HOME, PATH, etc.'
         });
 
-        if (!varName) return; // User cancelled
+        if (!varName) {
+          return;
+        }
         
         // Get variable value
         const value = process.env[varName] || '';
@@ -105,7 +106,7 @@ export function activate(ctx: vscode.ExtensionContext) {
 // Function to expand environment variables in a command string
 // Supports ${VAR}, $VAR syntax, and {process.env.VAR} syntax
 // Also supports custom variables defined in the file
-function expandEnvVariables(cmd: string, customVars?: Map<string, string>): string {
+export function expandEnvVariables(cmd: string, customVars?: Map<string, string>): string {
   // Replace custom variables if provided
   let result = cmd;
   if (customVars) {
@@ -158,7 +159,9 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
       const lines = varSection.split(/\r?\n/);
       for (const line of lines) {
         const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) continue; // Skip empty lines and comments
+        if (!trimmed || trimmed.startsWith('#')) {
+          continue;
+        }
         
         const eqIndex = trimmed.indexOf('=');
         if (eqIndex > 0) {
@@ -190,7 +193,9 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
       const title = m[1].trim();
       
       // Skip the variables section itself
-      if (title === '$VARIABLES') continue;
+      if (title === '$VARIABLES') {
+        continue;
+      }
       
       const cmd = m[2].trim();
       
