@@ -2,10 +2,10 @@
     "name": "terminal-executor",
     "displayName": "Terminal Executor",
     "description": "Execute commands from .terminal files with visual status indicators",
-    "version": "0.0.1",
-    "publisher": "Interosft",
+    "version": "1.0.0",
+    "publisher": "intersoft",
     "author": {
-        "name": "Intersoft Business Solutions",
+        "name": "Intersoft Business Solutions"
     },
     "license": "MIT",
     "repository": {
@@ -51,13 +51,29 @@
         "commands": [
             {
                 "command": "terminal-executor.executeCommand",
-                "title": "Execute command"
+                "title": "Execute command",
+                "enablement": "editorLangId == terminalFile"
             },
             {
                 "command": "terminal-executor.clearStatus",
-                "title": "Clear command execution status"
+                "title": "Clear command execution status",
+                "enablement": "editorLangId == terminalFile"
             }
         ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "terminal-executor.executeCommand",
+                    "when": "editorLangId == terminalFile",
+                    "group": "navigation"
+                },
+                {
+                    "command": "terminal-executor.clearStatus",
+                    "when": "editorLangId == terminalFile",
+                    "group": "navigation"
+                }
+            ]
+        },
         "codeLens": [
             {
                 "language": "terminalFile",
