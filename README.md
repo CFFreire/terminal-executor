@@ -1,13 +1,13 @@
-# Terminal Executor
+# Terminal Automator
 
-A VS Code extension for executing terminal commands directly from files.
+A VS Code extension that helps developers run and manage terminal commands directly from dedicated command files with status tracking.
 
 ## Features
 
-- Execute terminal commands from special terminal files
-- Track command execution status
+- Execute terminal commands from special `.terminal` files
+- Track command execution status with visual indicators
 - Expand environment variables within commands
-- Define custom variables within the file
+- Define custom variables within the file for reuse
 
 ## Usage
 
@@ -18,11 +18,11 @@ Create a file with the `.terminal` extension and structure it like this:
 your command here
 ```
 
-Click the "▶ Execute" CodeLens above the command to run it in the terminal.
+Click the "▶ Execute" CodeLens above the command to run it in the VS Code terminal.
 
 ## Variables
 
-Terminal Executor supports both environment variables and custom variables defined within your file.
+Terminal Automator supports both environment variables and custom variables defined within your file.
 
 ### Custom Variables
 
@@ -44,7 +44,7 @@ curl --location "https://api.example.com/${api_version}/${endpoint}?${query}"
 
 ### Environment Variables
 
-Terminal Executor supports various ways to use environment variables in your commands:
+Terminal Automator supports various ways to use environment variables in your commands:
 
 #### Supported Syntax
 
@@ -52,18 +52,16 @@ Terminal Executor supports various ways to use environment variables in your com
    ```
    {process.env.VARIABLE_NAME}
    ```
-
 2. **Shell Style with Braces**: 
    ```
    ${VARIABLE_NAME}
    ```
-
 3. **Simple Shell Style**: 
    ```
    $VARIABLE_NAME
    ```
 
-### Examples
+## Examples
 
 #### Using Custom Variables with Environment Variables
 
@@ -78,7 +76,7 @@ curl --location '{process.env.BASE_URL}/${endpoint}' \
   --data '${payload}'
 ```
 
-#### Database Connection Example
+#### Database Query Example
 
 ```
 ### $VARIABLES
@@ -88,28 +86,17 @@ query=SELECT * FROM users LIMIT 10;
 psql -h {process.env.DB_HOST} -U ${DB_USER} -d $DB_NAME -c "${query}"
 ```
 
-#### Running Scripts with Variables
-
-```
-### $VARIABLES
-script_name=process.js
-options=--verbose --no-cache
-
-### Run Script
-node {process.env.SCRIPTS_PATH}/${script_name} --env=${NODE_ENV} ${options}
-```
-
 ## Environment Variable Helper
 
-When your command contains environment variables, a "🔍 Get Env Var" CodeLens appears next to the Execute button. Click it to:
+When your command contains environment variables, a "🔍 Get Env Var" CodeLens appears next to the Execute button. This helps with debugging when variables aren't expanding as expected.
 
-1. Enter the name of any environment variable
-2. View its current value
-3. Copy the value to your clipboard
+## Safety & Security
 
-This helps with debugging when variables aren't expanding as expected.
+This extension only executes commands when explicitly triggered by the user - never automatically. All commands are executed in VS Code's integrated terminal with the same permissions as if you typed them manually.
+
+We recommend reviewing all commands in `.terminal` files before execution, especially when working with files from external sources.
 
 ## License
 
-MIT
+[MIT](LICENSE.md)
 

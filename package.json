@@ -1,41 +1,55 @@
 {
-    "name": "terminal-executor",
-    "displayName": "Terminal Executor",
-    "description": "Execute commands from .terminal files with visual status indicators",
+    "name": "terminal-automator",
+    "displayName": "Terminal Automator",
+    "description": "A secure tool for executing predefined terminal commands from .terminal files with visual feedback",
     "version": "1.0.0",
-    "publisher": "intersoft",
+    "publisher": "intersoftbs",
     "author": {
-        "name": "Intersoft Business Solutions"
+        "name": "Carlos Freire",
+        "email": "cfreire@intersoftbs.com"
     },
     "license": "MIT",
+    "homepage": "https://github.com/CFFreire/terminal-automator#readme",
+    "bugs": {
+        "url": "https://github.com/CFFreire/terminal-automator/issues",
+        "email": "cfreire@intersoftbs.com"
+    },
     "repository": {
         "type": "git",
-        "url": "https://github.com/CFFreire/terminal-executor.git"
+        "url": "https://github.com/CFFreire/terminal-automator.git"
     },
     "icon": "images/icon.png",
     "galleryBanner": {
-        "color": "#C80000",
+        "color": "#000000",
         "theme": "dark"
     },
     "keywords": [
-        "terminal",
-        "command",
-        "execution",
-        "script",
-        "automation"
+        "command-runner",
+        "task-execution",
+        "development-workflow",
+        "environment-variables",
+        "productivity"
     ],
     "engines": {
-        "vscode": "^1.60.0"
+        "vscode": "^1.81.0"
     },
     "categories": [
         "Other"
     ],
     "activationEvents": [
-        "onLanguage:terminalFile",
-        "onCommand:terminal-executor.executeCommand",
-        "onCommand:terminal-executor.clearStatus"
+        "onLanguage:terminalFile"
     ],
-    "main": "./out/extension.js",
+    "main": "dist/extension",
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": false,
+            "description": "This extension executes terminal commands and requires a trusted workspace."
+        },
+        "virtualWorkspaces": {
+            "supported": false,
+            "description": "This extension requires access to local terminals."
+        }
+    },
     "contributes": {
         "languages": [
             {
@@ -50,25 +64,30 @@
         ],
         "commands": [
             {
-                "command": "terminal-executor.executeCommand",
-                "title": "Execute command",
+                "command": "terminal-automator.executeCommand",
+                "title": "Execute Terminal Command",
                 "enablement": "editorLangId == terminalFile"
             },
             {
-                "command": "terminal-executor.clearStatus",
-                "title": "Clear command execution status",
+                "command": "terminal-automator.clearStatus",
+                "title": "Clear Command Execution Status",
+                "enablement": "editorLangId == terminalFile"
+            },
+            {
+                "command": "terminal-automator.getEnvVariable",
+                "title": "Get Environment Variable Value",
                 "enablement": "editorLangId == terminalFile"
             }
         ],
         "menus": {
             "editor/context": [
                 {
-                    "command": "terminal-executor.executeCommand",
+                    "command": "terminal-automator.executeCommand",
                     "when": "editorLangId == terminalFile",
                     "group": "navigation"
                 },
                 {
-                    "command": "terminal-executor.clearStatus",
+                    "command": "terminal-automator.clearStatus",
                     "when": "editorLangId == terminalFile",
                     "group": "navigation"
                 }
@@ -77,16 +96,15 @@
         "codeLens": [
             {
                 "language": "terminalFile",
-                "provider": "terminal-executor"
+                "provider": "terminal-automator"
             }
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "pretest": "npm run compile && npm run lint",
-        "lint": "eslint src --ext ts",
+        "vscode:prepublish": "webpack --mode production",
+        "webpack": "webpack --mode development",
+        "watch": "webpack --mode development --watch",
+        "tslint": "tslint --project tsconfig.json",
         "test": "node ./out/test/runTest.js",
         "package": "vsce package",
         "publish": "vsce publish"
@@ -99,13 +117,18 @@
         "@types/vscode": "^1.60.0",
         "@typescript-eslint/eslint-plugin": "5.42.0",
         "@typescript-eslint/parser": "5.42.0",
-        "@vscode/test-electron": "^2.3.4",
+        "@vscode/test-electron": "2.3.4",
         "eslint": "8.26.0",
-        "glob": "^8.0.3",
-        "mocha": "^10.0.0",
+        "glob": "8.0.3",
+        "mocha": "10.0.0",
         "sinon": "15.0.3",
-        "typescript": "4.8.4",
-        "vscode-test": "^1.6.1",
-        "@vscode/vsce": "^2.20.0"
+        "typescript": "5.4.2",
+        "vscode-test": "1.6.1",
+        "@vscode/vsce": "3.3.2",
+        "rimraf": "3.0.2",
+        "ts-loader": "7.0.5",
+        "tslint": "6.1.2",
+        "webpack": "5.75.0",
+        "webpack-cli": "5.0.1"
     }
 }

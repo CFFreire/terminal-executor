@@ -9,7 +9,33 @@ interface CommandStatus {
 // Map to keep track of command execution status
 const commandStatusMap = new Map<string, CommandStatus>();
 
+// Copyright (c) 2023 Intersoft Business Solutions
+// Licensed under the MIT License
+
+// Improved command sanitization
+function sanitizeCommand(command: string): string {
+  // Basic sanitization to prevent harmful commands
+  // Remove any attempts to chain commands maliciously
+  const sanitized = command.trim()
+    .replace(/\|\s*rm\s+-rf/gi, '| echo "Command blocked for security"')
+    .replace(/;\s*rm\s+-rf/gi, '; echo "Command blocked for security"');
+  
+  return sanitized;
+}
+
 export function activate(ctx: vscode.ExtensionContext) {
+  console.log('Terminal Automator extension is now active!');
+
+  const executeCommandDisposable = vscode.commands.registerCommand('terminal-automator.executeCommand', () => {
+    vscode.window.showInformationMessage('Execute command');
+  });
+
+  const clearStatusDisposable = vscode.commands.registerCommand('terminal-automator.clearStatus', () => {
+    vscode.window.showInformationMessage('Clear status');
+  });
+
+  ctx.subscriptions.push(executeCommandDisposable, clearStatusDisposable);
+
   // Register CodeLens provider
   const codeLensProvider = new TerminalCodeLensProvider();
   ctx.subscriptions.push(
@@ -22,7 +48,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   // Register command execution
   ctx.subscriptions.push(
     vscode.commands.registerCommand(
-      'terminal-executor.executeCommand',
+      'terminal-automator.executeCommand',
       async (cmd: string, hash: string, customVars?: Map<string, string>) => {
         try {
           // Set status to undefined while executing
@@ -31,12 +57,12 @@ export function activate(ctx: vscode.ExtensionContext) {
           // Refresh CodeLens to show "Executing..."
           codeLensProvider.refresh();
           
-          const term = vscode.window.terminals.find(t => t.name === 'Terminal Executor')
-                    ?? vscode.window.createTerminal('Terminal Executor');
+          const term = vscode.window.terminals.find(t => t.name === 'Terminal Automator')
+                    ?? vscode.window.createTerminal('Terminal Automator');
           term.show();
           
           // Process command to expand environment variables and custom variables
-          const processedCmd = expandEnvVariables(cmd, customVars);
+          const processedCmd = expandEnvVariables(sanitizeCommand(cmd), customVars);
           
           // Execute the command
           term.sendText(processedCmd);
@@ -61,7 +87,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   // Command to clear execution status
   ctx.subscriptions.push(
     vscode.commands.registerCommand(
-      'terminal-executor.clearStatus',
+      'terminal-automator.clearStatus',
       (hash: string) => {
         commandStatusMap.delete(hash);
         codeLensProvider.refresh();
@@ -72,7 +98,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   // Register command to get environment variable
   ctx.subscriptions.push(
     vscode.commands.registerCommand(
-      'terminal-executor.getEnvVariable',
+      'terminal-automator.getEnvVariable',
       async () => {
         // Prompt for variable name
         const varName = await vscode.window.showInputBox({
@@ -208,7 +234,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
       // Add the execute button CodeLens
       lenses.push(new vscode.CodeLens(line.range, {
         title: '▶ Execute',
-        command: 'terminal-executor.executeCommand',
+        command: 'terminal-automator.executeCommand',
         arguments: [cmd, cmdHash, customVars]
       }));
       
@@ -217,7 +243,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
       if (cmd.includes('$') || cmd.includes('process.env')) {
         lenses.push(new vscode.CodeLens(line.range, {
           title: '🔍 Get Env Var',
-          command: 'terminal-executor.getEnvVariable',
+          command: 'terminal-automator.getEnvVariable',
           arguments: []
         }));
       }
@@ -238,7 +264,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
           lenses.push(new vscode.CodeLens(line.range, {
             title: '✓ Success',
             tooltip: 'Command executed successfully',
-            command: 'terminal-executor.clearStatus',
+            command: 'terminal-automator.clearStatus',
             arguments: [cmdHash]
           }));
         } 
@@ -247,7 +273,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
           lenses.push(new vscode.CodeLens(line.range, {
             title: '✗ Error',
             tooltip: 'Command execution failed',
-            command: 'terminal-executor.clearStatus',
+            command: 'terminal-automator.clearStatus',
             arguments: [cmdHash]
           }));
         }
