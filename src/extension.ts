@@ -19,22 +19,12 @@ function sanitizeCommand(command: string): string {
   const sanitized = command.trim()
     .replace(/\|\s*rm\s+-rf/gi, '| echo "Command blocked for security"')
     .replace(/;\s*rm\s+-rf/gi, '; echo "Command blocked for security"');
-  
+
   return sanitized;
 }
 
 export function activate(ctx: vscode.ExtensionContext) {
   console.log('Terminal Automator extension is now active!');
-
-  const executeCommandDisposable = vscode.commands.registerCommand('terminal-automator.executeCommand', () => {
-    vscode.window.showInformationMessage('Execute command');
-  });
-
-  const clearStatusDisposable = vscode.commands.registerCommand('terminal-automator.clearStatus', () => {
-    vscode.window.showInformationMessage('Clear status');
-  });
-
-  ctx.subscriptions.push(executeCommandDisposable, clearStatusDisposable);
 
   // Register CodeLens provider
   const codeLensProvider = new TerminalCodeLensProvider();
@@ -53,25 +43,25 @@ export function activate(ctx: vscode.ExtensionContext) {
         try {
           // Set status to undefined while executing
           commandStatusMap.set(hash, { timestamp: Date.now() });
-          
+
           // Refresh CodeLens to show "Executing..."
           codeLensProvider.refresh();
-          
+
           const term = vscode.window.terminals.find(t => t.name === 'Terminal Automator')
-                    ?? vscode.window.createTerminal('Terminal Automator');
+            ?? vscode.window.createTerminal('Terminal Automator');
           term.show();
-          
+
           // Process command to expand environment variables and custom variables
           const processedCmd = expandEnvVariables(sanitizeCommand(cmd), customVars);
-          
+
           // Execute the command
           term.sendText(processedCmd);
-          
+
           // Wait a bit and mark as successful
           // In a real implementation, we would need a way to detect actual success/failure
           await new Promise(resolve => setTimeout(resolve, 500));
           commandStatusMap.set(hash, { success: true, timestamp: Date.now() });
-          
+
           // Refresh CodeLens to show success status
           codeLensProvider.refresh();
         } catch (error) {
@@ -109,10 +99,10 @@ export function activate(ctx: vscode.ExtensionContext) {
         if (!varName) {
           return;
         }
-        
+
         // Get variable value
         const value = process.env[varName] || '';
-        
+
         // Show the value
         if (value) {
           // Copy to clipboard
@@ -158,7 +148,7 @@ export function expandEnvVariables(cmd: string, customVars?: Map<string, string>
   result = result.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*)/g, (match, varName) => {
     return process.env[varName] || match; // Keep original if not found
   });
-  
+
   return result;
 }
 
@@ -176,11 +166,11 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
   private extractCustomVariables(docText: string): Map<string, string> {
     const customVars = new Map<string, string>();
     this.variablesRegex.lastIndex = 0; // Reset regex state
-    
+
     const match = this.variablesRegex.exec(docText);
     if (match) {
       const varSection = match[1];
-      
+
       // Parse each line as name=value
       const lines = varSection.split(/\r?\n/);
       for (const line of lines) {
@@ -188,7 +178,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
         if (!trimmed || trimmed.startsWith('#')) {
           continue;
         }
-        
+
         const eqIndex = trimmed.indexOf('=');
         if (eqIndex > 0) {
           const name = trimmed.substring(0, eqIndex).trim();
@@ -197,47 +187,48 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
         }
       }
     }
-    
+
     return customVars;
   }
 
   public provideCodeLenses(
     doc: vscode.TextDocument
   ): vscode.CodeLens[] {
+    console.log('provideCodeLenses called for', doc.uri.toString());
     const lenses: vscode.CodeLens[] = [];
     let m: RegExpExecArray | null;
-    
+
     const docText = doc.getText();
-    
+
     // Extract custom variables first
     const customVars = this.extractCustomVariables(docText);
-    
+
     // Process command sections
     this.regex.lastIndex = 0; // Reset regex state
-    
+
     while ((m = this.regex.exec(docText)) !== null) {
       const title = m[1].trim();
-      
+
       // Skip the variables section itself
       if (title === '$VARIABLES') {
         continue;
       }
-      
+
       const cmd = m[2].trim();
-      
+
       // Generate a hash for this command to track its status
       const cmdHash = `${doc.uri.toString()}_${m.index}`;
-      
+
       // Calculate the position of the line with "### …"
       const line = doc.lineAt(doc.positionAt(m.index).line);
-      
+
       // Add the execute button CodeLens
       lenses.push(new vscode.CodeLens(line.range, {
         title: '▶ Execute',
         command: 'terminal-automator.executeCommand',
         arguments: [cmd, cmdHash, customVars]
       }));
-      
+
       // Add "Get Env Var" CodeLens if the commands appears to use env variables
       // Check for both traditional $ syntax and process.env syntax
       if (cmd.includes('$') || cmd.includes('process.env')) {
@@ -247,7 +238,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
           arguments: []
         }));
       }
-      
+
       // Check if we have status for this command
       const status = commandStatusMap.get(cmdHash);
       if (status) {
@@ -258,7 +249,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
             command: '',
             arguments: []
           }));
-        } 
+        }
         // Success status
         else if (status.success) {
           lenses.push(new vscode.CodeLens(line.range, {
@@ -267,7 +258,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
             command: 'terminal-automator.clearStatus',
             arguments: [cmdHash]
           }));
-        } 
+        }
         // Error status
         else {
           lenses.push(new vscode.CodeLens(line.range, {
@@ -277,7 +268,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
             arguments: [cmdHash]
           }));
         }
-        
+
         // Add timestamp information (optional)
         const timeAgo = Math.round((Date.now() - status.timestamp) / 1000);
         if (timeAgo < 60) {
@@ -289,7 +280,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
         }
       }
     }
-    
+
     return lenses;
   }
 }
