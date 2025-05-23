@@ -1,18 +1,26 @@
+# Output folders
+out/**
+temp/**
+test/**
+
+# Source files
+src/**
+tsconfig.json
+webpack.config.js
+webpack.test.config.js
+.eslintrc.json
+
+# Git files
+.git/**
+.github/**
+.gitignore
+
+# NodeJS files
+node_modules/**
+npm-debug.log
+*.vsix
+
+# Other development files
 .vscode/**
 .vscode-test/**
-src/**
-.gitignore
-.yarnrc
-vsc-extension-quickstart.md
-**/tsconfig.json
-**/.eslintrc.json
-**/*.map
-**/*.ts
-**/terminal-executor-*/**
-terminal-executor-*.vsix
-.vscodeignore
-webpack.config.js
-scripts/**
-node_modules/**
-CODE_OF_CONDUCT.md
-**/*.bak
+images/screenshots/**
