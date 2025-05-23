@@ -6,25 +6,70 @@ interface CommandStatus {
   timestamp: number;
 }
 
+// Configuration for the extension
+// This can be extended to include more settings
+const CONFIGURATION = {
+  enabledConfirmation: false,
+  extensionName: 'Terminal Automator',
+  extensionId: 'terminal-automator'
+}
+
 // Map to keep track of command execution status
 const commandStatusMap = new Map<string, CommandStatus>();
 
-// Copyright (c) 2023 Intersoft Business Solutions
-// Licensed under the MIT License
+/**
+ * Get the command name in the format of "extensionId.command"
+ * @param command The command name to be executed
+ * @returns CONFIGURATION.extensionId.command
+ */
+function getCommandName (command: string): string {
+  return `${CONFIGURATION.extensionId}.${command}`;
+}
 
-// Improved command sanitization
+/**
+ * Sanitize the command string to prevent dangerous operations
+ * @param command The command string to be sanitized
+ * @returns The sanitized command string
+ */
 function sanitizeCommand(command: string): string {
-  // Basic sanitization to prevent harmful commands
-  // Remove any attempts to chain commands maliciously
-  const sanitized = command.trim()
-    .replace(/\|\s*rm\s+-rf/gi, '| echo "Command blocked for security"')
-    .replace(/;\s*rm\s+-rf/gi, '; echo "Command blocked for security"');
+  // List of dangerous patterns to check for
+  const dangerousPatterns = [
+    /rm\s+-rf/i, /rmdir/i, /format/i, /mkfs/i,
+    /dd\s+if/i, />\s*\/dev\//i, />\s*\/etc\//i,
+    /chmod\s+777/i, /chmod\s+-R/i,
+    /mv\s+.*\s+\/etc\//i, /rm\s+.*\s+\/etc\//i
+  ];
+
+  let sanitized = command.trim();
+
+  // Check for dangerous commands
+  for (const pattern of dangerousPatterns) {
+    if (pattern.test(sanitized)) {
+      throw new Error(`Potentially dangerous command detected: ${command}`);
+    }
+  }
 
   return sanitized;
 }
 
+function showWarningExecutionConfirmation(cmd: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    vscode.window.showWarningMessage(
+      `Are you sure you want to execute: ${cmd.substring(0, 100)}${cmd.length > 100 ? '...' : ''}`,
+      { modal: true },
+      'Execute'
+    ).then((result) => {
+      if (result === 'Execute') {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+  });
+}
+
 export function activate(ctx: vscode.ExtensionContext) {
-  console.log('Terminal Automator extension is now active!');
+  console.log(`${CONFIGURATION.extensionName} extension is now active!`);
 
   // Register CodeLens provider
   const codeLensProvider = new TerminalCodeLensProvider();
@@ -38,21 +83,38 @@ export function activate(ctx: vscode.ExtensionContext) {
   // Register command execution
   ctx.subscriptions.push(
     vscode.commands.registerCommand(
-      'terminal-automator.executeCommand',
+      getCommandName('executeCommand'),
       async (cmd: string, hash: string, customVars?: Map<string, string>) => {
         try {
+          if (CONFIGURATION.enabledConfirmation) {
+            const confirmed = await showWarningExecutionConfirmation(cmd);
+            if (confirmed) {
+              return;
+            }
+          }
           // Set status to undefined while executing
           commandStatusMap.set(hash, { timestamp: Date.now() });
 
           // Refresh CodeLens to show "Executing..."
           codeLensProvider.refresh();
 
-          const term = vscode.window.terminals.find(t => t.name === 'Terminal Automator')
-            ?? vscode.window.createTerminal('Terminal Automator');
+          const term = vscode.window.terminals.find(t => t.name === CONFIGURATION.extensionName)
+            ?? vscode.window.createTerminal(CONFIGURATION.extensionName);
           term.show();
 
+          //If sanitize command error is thrown, then we request to the user to confirm the command
+          let sanitizedCommandText = cmd;
+          try {
+            sanitizedCommandText = sanitizeCommand(sanitizedCommandText);
+          } catch (error) {
+            const confirmed = await showWarningExecutionConfirmation(cmd);
+            if (!confirmed) {
+              return;
+            }
+          }
+          
           // Process command to expand environment variables and custom variables
-          const processedCmd = expandEnvVariables(sanitizeCommand(cmd), customVars);
+          const processedCmd = expandEnvVariables(sanitizedCommandText, customVars);
 
           // Execute the command
           term.sendText(processedCmd);
@@ -77,7 +139,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   // Command to clear execution status
   ctx.subscriptions.push(
     vscode.commands.registerCommand(
-      'terminal-automator.clearStatus',
+      getCommandName('clearStatus'),
       (hash: string) => {
         commandStatusMap.delete(hash);
         codeLensProvider.refresh();
@@ -88,7 +150,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   // Register command to get environment variable
   ctx.subscriptions.push(
     vscode.commands.registerCommand(
-      'terminal-automator.getEnvVariable',
+      getCommandName('getEnvVariable'),
       async () => {
         // Prompt for variable name
         const varName = await vscode.window.showInputBox({
@@ -225,7 +287,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
       // Add the execute button CodeLens
       lenses.push(new vscode.CodeLens(line.range, {
         title: '▶ Execute',
-        command: 'terminal-automator.executeCommand',
+        command: getCommandName('executeCommand'),
         arguments: [cmd, cmdHash, customVars]
       }));
 
@@ -234,7 +296,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
       if (cmd.includes('$') || cmd.includes('process.env')) {
         lenses.push(new vscode.CodeLens(line.range, {
           title: '🔍 Get Env Var',
-          command: 'terminal-automator.getEnvVariable',
+          command: getCommandName('getEnvVariable'),
           arguments: []
         }));
       }
@@ -255,7 +317,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
           lenses.push(new vscode.CodeLens(line.range, {
             title: '✓ Success',
             tooltip: 'Command executed successfully',
-            command: 'terminal-automator.clearStatus',
+            command: getCommandName('clearStatus'),
             arguments: [cmdHash]
           }));
         }
@@ -264,7 +326,7 @@ class TerminalCodeLensProvider implements vscode.CodeLensProvider {
           lenses.push(new vscode.CodeLens(line.range, {
             title: '✗ Error',
             tooltip: 'Command execution failed',
-            command: 'terminal-automator.clearStatus',
+            command: getCommandName('clearStatus'),
             arguments: [cmdHash]
           }));
         }

@@ -1,2 +1,5 @@
+### $VARIABLES
+NAME=terminal
+
 ### Run command
-echo "Hello from terminal"
+echo "Hello from $NAME"

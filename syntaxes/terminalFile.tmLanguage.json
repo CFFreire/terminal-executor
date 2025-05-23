@@ -1,0 +1,127 @@
+{
+    "name": "Terminal File",
+    "scopeName": "source.terminalFile",
+    "fileTypes": ["terminal"],
+    "patterns": [
+        { "include": "#header" },
+        { "include": "#variables-section" },
+        { "include": "#command-section" },
+        { "include": "#shell-command" },
+        { "include": "#comment" },
+        { "include": "#string" },
+        { "include": "#variable" }
+    ],
+    "repository": {
+        "header": {
+            "name": "markup.heading.terminalFile",
+            "match": "^###\\s+(.+)$",
+            "captures": {
+                "0": { "name": "entity.name.section.terminalFile" },
+                "1": { "name": "entity.name.function.terminalFile" }
+            }
+        },
+        "variables-section": {
+            "begin": "^###\\s+\\$VARIABLES\\s*$",
+            "end": "(?=^###|\\z)",
+            "beginCaptures": {
+                "0": { "name": "entity.name.section.terminalFile variable.other.constant.terminalFile" }
+            },
+            "patterns": [
+                { "include": "#variable-definition" },
+                { "include": "#comment" }
+            ]
+        },
+        "variable-definition": {
+            "match": "^\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*(=)\\s*(.*)$",
+            "captures": {
+                "1": { "name": "variable.other.constant.terminalFile" },
+                "2": { "name": "keyword.operator.assignment.terminalFile" },
+                "3": { "name": "string.unquoted.terminalFile" }
+            }
+        },
+        "command-section": {
+            "begin": "^###\\s+(?!\\$VARIABLES)(.+)$",
+            "end": "(?=^###|\\z)",
+            "beginCaptures": {
+                "0": { "name": "entity.name.section.terminalFile" },
+                "1": { "name": "entity.name.function.terminalFile" }
+            },
+            "patterns": [
+                { "include": "#shell-command" },
+                { "include": "#comment" }
+            ]
+        },
+        "shell-command": {
+            "patterns": [
+                {
+                    "name": "keyword.control.terminalFile",
+                    "match": "\\b(if|then|else|elif|fi|for|in|do|done|while|until|case|esac|break|continue|return)\\b"
+                },
+                {
+                    "name": "keyword.operator.terminalFile",
+                    "match": "(?<![\\w\\-])(\\-\\-?[a-zA-Z0-9\\-]+)(?![\\w\\-])"
+                },
+                {
+                    "name": "string.quoted.double.terminalFile",
+                    "begin": "\"",
+                    "end": "\"",
+                    "patterns": [
+                        { "include": "#variable" },
+                        { "include": "#escaped-char" }
+                    ]
+                },
+                {
+                    "name": "string.quoted.single.terminalFile",
+                    "begin": "'",
+                    "end": "'"
+                },
+                { "include": "#variable" },
+                {
+                    "name": "constant.language.terminalFile",
+                    "match": "\\b(true|false|null)\\b"
+                },
+                {
+                    "name": "constant.numeric.terminalFile",
+                    "match": "\\b[0-9]+(\\.[0-9]+)?\\b"
+                },
+                {
+                    "name": "support.function.terminalFile",
+                    "match": "\\b(curl|wget|echo|cat|ls|cp|mv|rm|mkdir|cd|pwd|find|grep|sed|awk|source|export|set|unset|sudo|ssh|git|npm|node|python|pip|docker|kubectl)\\b"
+                }
+            ]
+        },
+        "variable": {
+            "patterns": [
+                {
+                    "name": "variable.other.terminalFile",
+                    "match": "\\$\\{([A-Za-z0-9_]+)\\}",
+                    "captures": {
+                        "1": { "name": "variable.other.terminalFile" }
+                    }
+                },
+                {
+                    "name": "variable.other.terminalFile",
+                    "match": "\\$([A-Za-z_][A-Za-z0-9_]*)",
+                    "captures": {
+                        "1": { "name": "variable.other.terminalFile" }
+                    }
+                },
+                {
+                    "name": "variable.other.terminalFile",
+                    "match": "\\{process\\.env\\.([^}]+)\\}",
+                    "captures": {
+                        "1": { "name": "variable.other.terminalFile" }
+                    }
+                }
+            ]
+        },
+        "comment": {
+            "name": "comment.line.number-sign.terminalFile",
+            "match": "#.*$"
+        },
+        "escaped-char": {
+            "name": "constant.character.escape.terminalFile",
+            "match": "\\\\."
+        }
+    }
+}

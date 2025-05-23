@@ -36,9 +36,7 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [
-        "onLanguage:terminalFile"
-    ],
+    "activationEvents": [],
     "main": "dist/extension",
     "capabilities": {
         "untrustedWorkspaces": {
@@ -59,7 +57,15 @@
                 ],
                 "aliases": [
                     "Terminal File"
-                ]
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "terminalFile",
+                "scopeName": "source.terminalFile",
+                "path": "./syntaxes/terminalFile.tmLanguage.json"
             }
         ],
         "commands": [
