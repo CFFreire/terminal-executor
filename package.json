@@ -9,14 +9,14 @@
         "email": "cfreire@intersoftbs.com"
     },
     "license": "MIT",
-    "homepage": "https://github.com/CFFreire/terminal-automator#readme",
+    "homepage": "https://github.com/CFFreire/terminal-executor/blob/main/README.md",
     "bugs": {
-        "url": "https://github.com/CFFreire/terminal-automator/issues",
+        "url": "https://github.com/CFFreire/terminal-executor/issues",
         "email": "cfreire@intersoftbs.com"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/CFFreire/terminal-automator.git"
+        "url": "https://github.com/CFFreire/terminal-executor.git"
     },
     "icon": "images/icon.png",
     "galleryBanner": {

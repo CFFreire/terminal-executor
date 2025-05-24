@@ -38,8 +38,8 @@ query=name=john&active=true
 Then use them in your commands:
 
 ```
-### Get Users
-curl --location "https://api.example.com/${api_version}/${endpoint}?${query}"
+### Hello
+echo 'Hello from terminal'
 ```
 
 ### Environment Variables
