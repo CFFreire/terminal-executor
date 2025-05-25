@@ -6,11 +6,20 @@
         { "include": "#header" },
         { "include": "#variables-section" },
         { "include": "#command-section" },
+        { "include": "#include-directive" },
         { "include": "#shell-command" },
         { "include": "#comment" },
         { "include": "#string" },
         { "include": "#variable" }
     ],
+        "include-directive": {
+            "name": "meta.preprocessor.include.terminalFile",
+            "match": "^#include\\s+([A-Za-z0-9_\\-]+)",
+            "captures": {
+                "0": { "name": "keyword.control.include.terminalFile" },
+                "1": { "name": "entity.name.function.terminalFile" }
+            }
+        },
     "repository": {
         "header": {
             "name": "markup.heading.terminalFile",
@@ -47,6 +56,7 @@
                 "1": { "name": "entity.name.function.terminalFile" }
             },
             "patterns": [
+                { "include": "#include-directive" },
                 { "include": "#shell-command" },
                 { "include": "#comment" }
             ]

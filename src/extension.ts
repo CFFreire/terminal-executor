@@ -22,7 +22,7 @@ const commandStatusMap = new Map<string, CommandStatus>();
  * @param command The command name to be executed
  * @returns CONFIGURATION.extensionId.command
  */
-function getCommandName (command: string): string {
+function getCommandName(command: string): string {
   return `${CONFIGURATION.extensionId}.${command}`;
 }
 
@@ -112,12 +112,80 @@ export function activate(ctx: vscode.ExtensionContext) {
               return;
             }
           }
-          
-          // Process command to expand environment variables and custom variables
-          const processedCmd = expandEnvVariables(sanitizedCommandText, customVars);
 
-          // Execute the command
-          term.sendText(processedCmd);
+
+          // Parse all blocks in the document
+          const editor = vscode.window.activeTextEditor;
+          if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+          }
+          const docText = editor.document.getText();
+          const blocks = parseBlocks(docText);
+
+          // Find the block that matches the command to execute
+          const blockName = findBlockNameByCommand(blocks, sanitizedCommandText);
+          if (!blockName) {
+            vscode.window.showErrorMessage('No matching block found for execution.');
+            return;
+          }
+
+          // Expand includes recursively and expand variables
+          let expandedCmd = expandIncludes(blockName, blocks, new Set());
+          expandedCmd = expandEnvVariables(expandedCmd, customVars);
+
+          // Execute the expanded command
+          term.sendText(expandedCmd);
+          // Parse all blocks in the document and return a map { blockName: blockContent }
+          function parseBlocks(docText: string): Map<string, string> {
+            const blockRegex = /###\s+([^\r\n]+)\r?\n([\s\S]*?)(?=(?:\r?\n###)|\r?\n*$)/g;
+            const blocks = new Map<string, string>();
+            let m: RegExpExecArray | null;
+            while ((m = blockRegex.exec(docText)) !== null) {
+              const name = m[1].trim();
+              if (name === '$VARIABLES') continue;
+              blocks.set(name, m[2].trim());
+            }
+            return blocks;
+          }
+
+          // Find the block name by matching its content to the command string
+          function findBlockNameByCommand(blocks: Map<string, string>, command: string): string | undefined {
+            for (const [name, content] of blocks.entries()) {
+              if (content === command.trim()) {
+                return name;
+              }
+            }
+            return undefined;
+          }
+
+          // Expand #include statements recursively, with loop detection
+          function expandIncludes(blockName: string, blocks: Map<string, string>, visited: Set<string>): string {
+            if (visited.has(blockName)) {
+              throw new Error(`Recursive #include detected for block: ${blockName}`);
+            }
+            visited.add(blockName);
+            const content = blocks.get(blockName);
+            if (!content) {
+              throw new Error(`Block not found: ${blockName}`);
+            }
+            const lines = content.split(/\r?\n/);
+            let result: string[] = [];
+            for (const line of lines) {
+              const includeMatch = line.match(/^#include\s+(.+)$/);
+              if (includeMatch) {
+                const includeBlock = includeMatch[1].trim();
+                if (!blocks.has(includeBlock)) {
+                  throw new Error(`Included block does not exist: ${includeBlock}`);
+                }
+                result.push(expandIncludes(includeBlock, blocks, visited));
+              } else {
+                result.push(line);
+              }
+            }
+            visited.delete(blockName);
+            return result.join('\n');
+          }
 
           // Wait a bit and mark as successful
           // In a real implementation, we would need a way to detect actual success/failure
@@ -126,11 +194,15 @@ export function activate(ctx: vscode.ExtensionContext) {
 
           // Refresh CodeLens to show success status
           codeLensProvider.refresh();
-        } catch (error) {
+        } catch (error: any) {
           // Mark as failed if there's an error
           commandStatusMap.set(hash, { success: false, timestamp: Date.now() });
           codeLensProvider.refresh();
           console.error('Error executing command:', error);
+          vscode.window.showInformationMessage(
+            'Error executing command: ' + error.message,
+            "Accept"
+          );
         }
       }
     )
